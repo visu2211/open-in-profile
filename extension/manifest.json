@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Open Tab in Profile",
+  "version": "1.0",
+  "description": "Send the current tab, or all shift-selected tabs, to another Chrome profile or an Incognito window.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtOKrNlPoVqPCa7vCAy24Pn3Ug1zQlkfD0Et4GvuISxasS9sw7E+A/u15nh9YWqXrrqGAygWx0uEc4/tl9t967+0HLZLIPU5azyF+RGz8ltfZRQOCMU88dOrj05JONMggWcpFdUFV6maw3YTeZJ+HxcLsDUVUCOmaR8fjZ1OiOgeDjKlxjT3WxVQe9f4Awva3LEUsnQtt8xXIFR64juRRYXZBh4Gh2fEBzIzJcMSvJwHzzP2LXtpzE0vp6IPMN6zot2KEjzBOVfAcXSJdlXwL7HHmFkBDa20Gup+8nK41PhZazvgV+6JSU0H5k0S/LHhVcrvayqcWUNrQU6gCzA0+kwIDAQAB",
+  "permissions": ["tabs", "nativeMessaging", "contextMenus", "storage", "identity"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Open tab in profile",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
