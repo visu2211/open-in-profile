@@ -24,6 +24,33 @@ import struct
 import subprocess
 import sys
 
+"""
+Native messaging host for the "Open Tab in Profile" Chrome extension (macOS).
+
+Chrome extensions cannot enumerate other Chrome profiles or launch them
+directly -- that's blocked for privacy/security reasons. This small helper
+runs locally (spawned by Chrome itself over stdin/stdout, never network-
+reachable) and does the things the extension can't:
+
+  1. list_profiles - reads Chrome's own "Local State" file to report the
+     profiles installed on this machine, including each profile's Google
+     account picture (if it has one) so the popup can show real avatars.
+  2. open_tabs     - shells out to `open -na "Google Chrome" --args ...`
+     to actually launch tabs in a different profile or Incognito.
+
+Native messaging wire format: each message is a 4-byte little-endian
+length prefix followed by that many bytes of UTF-8 JSON, in both
+directions. See:
+https://developer.chrome.com/docs/apps/nativeMessaging/
+"""
+
+import base64
+import json
+import os
+import struct
+import subprocess
+import sys
+
 CHROME_USER_DATA_DIR = os.path.expanduser(
     "~/Library/Application Support/Google/Chrome"
 )
@@ -46,6 +73,26 @@ def send_message(obj):
     sys.stdout.buffer.flush()
 
 
+def _avatar_for(dir_name, info):
+    """Best-effort: return (base64, mime) for a profile's account picture, or None."""
+    filename = info.get("gaia_picture_file_name")
+    if not filename:
+        return None
+    path = os.path.join(CHROME_USER_DATA_DIR, dir_name, filename)
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, "rb") as f:
+            data = f.read()
+    except Exception:
+        return None
+    if len(data) > 300_000:
+        return None  # sanity cap, native messages have a size limit
+    ext = os.path.splitext(filename)[1].lower()
+    mime = "image/png" if ext == ".png" else "image/jpeg" if ext in (".jpg", ".jpeg") else "image/png"
+    return base64.b64encode(data).decode("ascii"), mime
+
+
 def list_profiles():
     if not os.path.exists(LOCAL_STATE_PATH):
         return {"ok": False, "error": "Couldn't find Chrome's Local State file. Is Chrome installed at the default location?"}
@@ -61,7 +108,11 @@ def list_profiles():
     for dir_name, info in info_cache.items():
         name = info.get("shortcut_name") or info.get("name") or dir_name
         email = info.get("user_name") or ""
-        profiles.append({"dir": dir_name, "name": name, "email": email})
+        entry = {"dir": dir_name, "name": name, "email": email}
+        avatar = _avatar_for(dir_name, info)
+        if avatar:
+            entry["avatar_b64"], entry["avatar_mime"] = avatar
+        profiles.append(entry)
 
     profiles.sort(key=lambda p: p["name"].lower())
     return {"ok": True, "profiles": profiles}
