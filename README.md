@@ -11,7 +11,7 @@ Chrome doesn't let extensions hook into the native tab-strip right-click menu (t
 
 ## Why it needs a helper script
 
-Extensions can't enumerate other Chrome profiles or launch them - that's blocked for privacy/security. host/open_in_profile_host.py runs locally (only Chrome can talk to it, never the network) and does those two things: reads Chrome's own profile list, and runs `open -na "Google Chrome" --args --profile-directory=... <urls>` to open the tabs there.
+Extensions can't enumerate other Chrome profiles or launch them - that's blocked for privacy/security. host/open_in_profile_host.py runs locally (only Chrome can talk to it, never the network) and does those things: reads Chrome's own profile list (including each profile's Google account picture, if it has one), and runs `open -na "Google Chrome" --args --profile-directory=... <urls>` to open the tabs there.
 
 ## Install (macOS)
 
@@ -25,10 +25,16 @@ Extensions can't enumerate other Chrome profiles or launch them - that's blocked
 4. Fully quit Chrome (Cmd+Q) and reopen it so it picks up the new native messaging host.
 5. Click the extension's toolbar icon on any tab - you should see your other profiles listed.
 
-To remove everything later: cd host && ./uninstall.sh, then remove the extension from chrome://extensions.
+To remove everything later: `cd host && ./uninstall.sh`, then remove the extension from chrome://extensions.
+
+## Settings
+
+Click "Settings" at the bottom of the popup (or right-click the toolbar icon and choose Options) to tell the extension which profile is "you." That profile then gets left out of the list, since sending a tab to your own current profile doesn't do anything useful. Without this, the extension falls back to a best-effort guess based on your signed-in Google account, which only works if that profile is actually signed in.
+
+The popup and settings page also follow your system's light/dark mode automatically.
 
 ## Known limitations
 
-- Excluding your current profile from the list is best-effort: it only works if you're signed into that profile with a Google account, by matching it against your other profiles' signed-in accounts. If you use local (not signed-in) profiles, all profiles will show up in the list, including the one you're already on - clicking it just reopens the same tabs in a new window of the same profile, which is harmless but not useful.
+- Real profile avatars only show up for profiles signed into a Google account with a profile picture; local (not signed-in) profiles fall back to a colored initial.
 - Profile names shown are whatever you've named them in Chrome's own profile settings.
 - macOS only, since install.sh and the helper shell out to macOS's open command. A Windows version would use a PowerShell companion instead - ask if you want that built too.
