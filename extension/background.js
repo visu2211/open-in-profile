@@ -5,7 +5,7 @@
 
 const HOST_NAME = "com.openinprofile.host";
 
-let cachedProfiles = null; // [{dir, name, email}]
+let cachedProfiles = null; // [{dir, name, email, avatar_b64?, avatar_mime?}]
 let currentEmail = null;
 
 async function fetchProfiles() {
@@ -34,6 +34,15 @@ async function fetchCurrentEmail() {
   }
 }
 
+async function getStoredProfileDir() {
+  try {
+    const { myProfileDir } = await chrome.storage.local.get("myProfileDir");
+    return myProfileDir || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function refreshData(force = false) {
   if (!cachedProfiles || force) {
     const result = await fetchProfiles();
@@ -42,17 +51,22 @@ async function refreshData(force = false) {
   if (currentEmail === null) {
     currentEmail = (await fetchCurrentEmail()) || "";
   }
-  return { profiles: cachedProfiles, currentEmail };
+  const storedDir = await getStoredProfileDir();
+  return { profiles: cachedProfiles, currentEmail, storedDir };
 }
 
-function visibleProfiles(profiles, currentEmail) {
+function visibleProfiles(profiles, currentEmail, storedDir) {
   if (!profiles || !profiles.ok) return [];
+  if (storedDir) {
+    // Reliable path: user told us which profile this is via the options page.
+    return profiles.profiles.filter((p) => p.dir !== storedDir);
+  }
   if (!currentEmail) return profiles.profiles; // can't tell which one is "us" - show all
   return profiles.profiles.filter((p) => (p.email || "").toLowerCase() !== currentEmail.toLowerCase());
 }
 
 async function rebuildContextMenu() {
-  const { profiles, currentEmail: email } = await refreshData();
+  const { profiles, currentEmail: email, storedDir } = await refreshData();
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: "open-tab-in-root",
@@ -60,7 +74,7 @@ async function rebuildContextMenu() {
       contexts: ["page"],
     });
 
-    const list = visibleProfiles(profiles, email);
+    const list = visibleProfiles(profiles, email, storedDir);
     if (profiles && profiles.ok && list.length > 0) {
       for (const p of list) {
         chrome.contextMenus.create({
@@ -103,6 +117,9 @@ async function rebuildContextMenu() {
 
 chrome.runtime.onInstalled.addListener(() => rebuildContextMenu());
 chrome.runtime.onStartup.addListener(() => rebuildContextMenu());
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.myProfileDir) rebuildContextMenu();
+});
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!info.menuItemId.toString().startsWith("profile:")) return;
@@ -140,13 +157,28 @@ function sendToProfile(urls, target) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "getData") {
     (async () => {
-      const { profiles, currentEmail: email } = await refreshData(true);
+      const { profiles, currentEmail: email, storedDir } = await refreshData(true);
       sendResponse({
         ok: !!(profiles && profiles.ok),
         error: profiles && !profiles.ok ? profiles.error : null,
-        profiles: visibleProfiles(profiles, email),
+        profiles: visibleProfiles(profiles, email, storedDir),
       });
       rebuildContextMenu();
+    })();
+    return true; // async
+  }
+
+  if (message?.type === "getAllProfiles") {
+    // Used by options.html to build the "which profile is this?" picker -
+    // unfiltered, so the user can see (and pick) every detected profile.
+    (async () => {
+      const result = await fetchProfiles();
+      cachedProfiles = result;
+      sendResponse({
+        ok: !!(result && result.ok),
+        error: result && !result.ok ? result.error : null,
+        profiles: result && result.ok ? result.profiles : [],
+      });
     })();
     return true; // async
   }
