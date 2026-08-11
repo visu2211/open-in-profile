@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Open Tab in Profile - Settings</title>
+<style>
+  :root {
+    --bg: #fff;
+    --text: #202124;
+    --text-muted: #5f6368;
+    --border: #e8eaed;
+    --hover: #f1f3f4;
+    --accent: #1a73e8;
+    --avatar-bg: #7b61ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #202124;
+      --text: #e8eaed;
+      --text-muted: #9aa0a6;
+      --border: #3c4043;
+      --hover: #35363a;
+      --accent: #8ab4f8;
+      --avatar-bg: #8b7bff;
+    }
+  }
+  body {
+    margin: 0;
+    padding: 32px;
+    max-width: 480px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text);
+    background: var(--bg);
+  }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  p.sub { font-size: 13px; color: var(--text-muted); margin: 0 0 20px; line-height: 1.5; }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .row:hover { background: var(--hover); }
+  .row.selected { border-color: var(--accent); }
+  .avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--avatar-bg);
+    flex-shrink: 0;
+    object-fit: cover;
+  }
+  .name { font-size: 13px; flex: 1; }
+  .check { color: var(--accent); font-size: 13px; visibility: hidden; }
+  .row.selected .check { visibility: visible; }
+  .status { font-size: 12px; color: var(--text-muted); margin-top: 12px; min-height: 16px; }
+  .status.saved { color: var(--accent); }
+</style>
+</head>
+<body>
+  <h1>Open Tab in Profile</h1>
+  <p class="sub">Pick which Chrome profile this is. It'll be left out of the "open tab in" list, since sending a tab to your own current profile doesn't do anything useful.</p>
+  <div id="list"></div>
+  <div class="status" id="status"></div>
+  <script src="options.js"></script>
+</body>
+</html>
