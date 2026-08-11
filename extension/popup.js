@@ -1,5 +1,10 @@
 const listEl = document.getElementById("list");
 const headerEl = document.getElementById("header");
+const settingsLink = document.getElementById("settings-link");
+
+settingsLink.addEventListener("click", () => {
+  chrome.runtime.openOptionsPage();
+});
 
 function initial(name) {
   return (name || "?").trim().charAt(0).toUpperCase();
@@ -13,12 +18,22 @@ function renderError(message) {
   listEl.appendChild(div);
 }
 
-function renderRow({ label, avatarText, incognito, onClick }) {
+function renderRow({ label, avatarText, avatarSrc, incognito, onClick }) {
   const row = document.createElement("div");
   row.className = "row";
-  const avatar = document.createElement("div");
-  avatar.className = "avatar" + (incognito ? " incognito" : "");
-  avatar.textContent = avatarText;
+
+  let avatar;
+  if (avatarSrc) {
+    avatar = document.createElement("img");
+    avatar.className = "avatar";
+    avatar.src = avatarSrc;
+    avatar.alt = "";
+  } else {
+    avatar = document.createElement("div");
+    avatar.className = "avatar" + (incognito ? " incognito" : "");
+    avatar.textContent = avatarText;
+  }
+
   const span = document.createElement("span");
   span.textContent = label;
   row.appendChild(avatar);
@@ -47,9 +62,11 @@ async function main() {
       renderError("No other Chrome profiles found on this machine.");
     } else {
       for (const p of data.profiles) {
+        const avatarSrc = p.avatar_b64 ? `data:${p.avatar_mime || "image/png"};base64,${p.avatar_b64}` : null;
         renderRow({
           label: p.name,
           avatarText: initial(p.name),
+          avatarSrc,
           onClick: () => sendAndClose({ dir: p.dir }, urls),
         });
       }
