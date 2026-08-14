@@ -1,6 +1,14 @@
 const listEl = document.getElementById("list");
-const headerEl = document.getElementById("header");
+const titleEl = document.getElementById("title");
+const subtitleEl = document.getElementById("subtitle");
 const settingsLink = document.getElementById("settings-link");
+
+const INCOGNITO_SVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M3 13l1.8-5.4A2 2 0 016.7 6h10.6a2 2 0 011.9 1.6L21 13" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="6.5" cy="15.5" r="2.5" stroke="white" stroke-width="1.6"/>
+  <circle cx="17.5" cy="15.5" r="2.5" stroke="white" stroke-width="1.6"/>
+  <path d="M9 15.5h6" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+</svg>`;
 
 settingsLink.addEventListener("click", () => {
   chrome.runtime.openOptionsPage();
@@ -31,10 +39,15 @@ function renderRow({ label, avatarText, avatarSrc, incognito, onClick }) {
   } else {
     avatar = document.createElement("div");
     avatar.className = "avatar" + (incognito ? " incognito" : "");
-    avatar.textContent = avatarText;
+    if (incognito) {
+      avatar.innerHTML = INCOGNITO_SVG;
+    } else {
+      avatar.textContent = avatarText;
+    }
   }
 
   const span = document.createElement("span");
+  span.className = "row-label";
   span.textContent = label;
   row.appendChild(avatar);
   row.appendChild(span);
@@ -46,7 +59,11 @@ async function main() {
   const tabs = await chrome.tabs.query({ highlighted: true, currentWindow: true });
   const urls = tabs.map((t) => t.url).filter(Boolean);
 
-  headerEl.textContent = urls.length > 1 ? `Send ${urls.length} tabs to…` : "Open tab in…";
+  if (urls.length > 1) {
+    subtitleEl.textContent = `${urls.length} tabs selected`;
+  } else {
+    subtitleEl.textContent = "";
+  }
 
   chrome.runtime.sendMessage({ type: "getData" }, (data) => {
     listEl.innerHTML = "";
