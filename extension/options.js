@@ -1,8 +1,25 @@
 const listEl = document.getElementById("list");
 const statusEl = document.getElementById("status");
 
+const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15"/>
+  <path d="M8 12.5l2.5 2.5L16 9.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
 function initial(name) {
   return (name || "?").trim().charAt(0).toUpperCase();
+}
+
+function showStatus(text, saved) {
+  statusEl.innerHTML = saved ? CHECK_SVG : "";
+  const textNode = document.createElement("span");
+  textNode.textContent = text;
+  statusEl.appendChild(textNode);
+  statusEl.classList.toggle("saved", !!saved);
+  // restart the fade-in transition
+  statusEl.classList.remove("visible");
+  void statusEl.offsetWidth;
+  statusEl.classList.add("visible");
 }
 
 async function main() {
@@ -12,18 +29,18 @@ async function main() {
     listEl.innerHTML = "";
 
     if (chrome.runtime.lastError || !data || !data.ok) {
-      const msg = document.createElement("p");
-      msg.className = "status";
-      msg.textContent = (data && data.error) || "Companion helper not installed. Run host/install.sh, then reopen this page.";
-      listEl.appendChild(msg);
+      const div = document.createElement("div");
+      div.className = "empty";
+      div.textContent = (data && data.error) || "Companion helper not installed. Run host/install.sh, then reopen this page.";
+      listEl.appendChild(div);
       return;
     }
 
     if (!data.profiles || data.profiles.length === 0) {
-      const msg = document.createElement("p");
-      msg.className = "status";
-      msg.textContent = "No Chrome profiles were detected on this machine.";
-      listEl.appendChild(msg);
+      const div = document.createElement("div");
+      div.className = "empty";
+      div.textContent = "No Chrome profiles were detected on this machine.";
+      listEl.appendChild(div);
       return;
     }
 
@@ -47,20 +64,18 @@ async function main() {
       name.className = "name";
       name.textContent = p.name;
 
-      const check = document.createElement("span");
-      check.className = "check";
-      check.textContent = "✓ This one";
+      const radio = document.createElement("span");
+      radio.className = "radio";
 
       row.appendChild(avatar);
       row.appendChild(name);
-      row.appendChild(check);
+      row.appendChild(radio);
 
       row.addEventListener("click", async () => {
         await chrome.storage.local.set({ myProfileDir: p.dir });
         document.querySelectorAll(".row").forEach((r) => r.classList.remove("selected"));
         row.classList.add("selected");
-        statusEl.textContent = `Saved. "${p.name}" is now hidden from the list.`;
-        statusEl.classList.add("saved");
+        showStatus(`"${p.name}" is now hidden from the list`, true);
       });
 
       listEl.appendChild(row);
