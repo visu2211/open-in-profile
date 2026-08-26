@@ -115,7 +115,12 @@ async function rebuildContextMenu() {
   });
 }
 
-chrome.runtime.onInstalled.addListener(() => rebuildContextMenu());
+chrome.runtime.onInstalled.addListener((details) => {
+  rebuildContextMenu();
+  if (details.reason === "install") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("welcome.html") });
+  }
+});
 chrome.runtime.onStartup.addListener(() => rebuildContextMenu());
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.myProfileDir) rebuildContextMenu();
