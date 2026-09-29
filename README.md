@@ -24,6 +24,9 @@ Extensions can't enumerate other Chrome profiles or launch them - that's blocked
 
 4. Fully quit Chrome (Cmd+Q) and reopen it so it picks up the new native messaging host.
 5. Click the extension's toolbar icon on any tab - you should see your other profiles listed.
+6. On macOS 26 or newer, grant the helper Full Disk Access once (macOS will not prompt for it, see below): System Settings > Privacy & Security > Full Disk Access > "+" > pick `~/Library/Application Support/OpenInProfileHelper/OpenInProfileHelper.app` (`install.sh` opens both the pane and a Finder window at the app for you). No Chrome restart needed after that.
+
+`install.sh` needs the Xcode Command Line Tools (`xcode-select --install`) because it compiles a tiny launcher. Why: since macOS 26, Chrome's own `~/Library/Application Support/Google/Chrome` folder is covered by Apple's "Application Support protection" (a hardcoded allowlist in `sandboxd`, enforced through the `com.apple.macl` extended attribute). Anything not on that list is denied silently, with no permission prompt, and Chrome launches native messaging hosts with TCC responsibility disclaimed, so a bare `python3` script fails with "Couldn't read Chrome's Local State file: [Errno 1] Operation not permitted". The helper is therefore installed as `OpenInProfileHelper.app`, an ad-hoc-signed bundle whose launcher (`host/launcher.c`) spawns the Python helper as a child that inherits the bundle's identity. That gives macOS a stable app to grant Full Disk Access to, and the grant covers the Python child.
 
 To remove everything later: `cd host && ./uninstall.sh`, then remove the extension from chrome://extensions.
 

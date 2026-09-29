@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>OpenInProfileHelper</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.openinprofile.helper</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>Open Tab in Profile Helper</string>
+    <key>CFBundleDisplayName</key>
+    <string>Open Tab in Profile Helper</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.2</string>
+    <key>CFBundleVersion</key>
+    <string>2</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>LSBackgroundOnly</key>
+    <true/>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>Local helper for the Open Tab in Profile Chrome extension. Reads Chrome's profile list; never touches the network.</string>
+</dict>
+</plist>
