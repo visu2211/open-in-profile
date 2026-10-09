@@ -54,9 +54,33 @@ int main(int argc, char **argv) {
     char script[PATH_MAX];
     snprintf(script, sizeof(script), "%s/Resources/open_in_profile_host.py", real);
 
+    // Pick a python3 that does not route through xcrun. /usr/bin/python3 is
+    // an xcrun shim: it dlopens libxcrun.dylib from whatever xcode-select
+    // points at and dies if that Xcode is missing, stale, or built for a
+    // different macOS (Oct 2026: Xcode 27.0 on macOS 27.0.1 -> "have arm64,
+    // need arm64e", every /usr/bin shim dead). Chrome spawns us with a
+    // minimal PATH, so resolve absolute paths and keep the shim as last resort.
+    static const char *const candidates[] = {
+        "/Library/Developer/CommandLineTools/usr/bin/python3",
+        "/opt/homebrew/bin/python3",
+        "/usr/local/bin/python3",
+        "/usr/bin/python3",
+    };
+    const char *python = NULL;
+    for (size_t i = 0; i < sizeof(candidates) / sizeof(candidates[0]); i++) {
+        if (access(candidates[i], X_OK) == 0) {
+            python = candidates[i];
+            break;
+        }
+    }
+    if (!python) {
+        fprintf(stderr, "launcher: no python3 interpreter found\n");
+        return 1;
+    }
+
     // Build argv: python3 <script> <chrome args...>
     char **args = calloc((size_t)argc + 2, sizeof(char *));
-    args[0] = "/usr/bin/python3";
+    args[0] = (char *)python;
     args[1] = script;
     for (int i = 1; i < argc; i++) args[i + 1] = argv[i];
     args[argc + 1] = NULL;

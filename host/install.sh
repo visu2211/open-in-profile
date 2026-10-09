@@ -35,6 +35,14 @@ if ! command -v cc >/dev/null 2>&1; then
   exit 1
 fi
 
+# /usr/bin/cc is an xcrun shim. If xcode-select points at an Xcode that is
+# missing, stale, or built for a different macOS, the shim fails even though
+# `command -v cc` succeeds. Fall back to the Command Line Tools for this build.
+if ! cc --version >/dev/null 2>&1 && [[ -d /Library/Developer/CommandLineTools ]]; then
+  echo "note: 'cc' via xcode-select is not working; building with the Command Line Tools instead"
+  export DEVELOPER_DIR=/Library/Developer/CommandLineTools
+fi
+
 echo "Building helper bundle in: $APP_DIR"
 rm -rf "$APP_DIR"
 # Clean up the pre-bundle layout from older installs.
